@@ -50,3 +50,10 @@ async def run_agent(body: RunBody):
         result = await agent.run()
 
         return {
+            "status": "ok",
+            "summary": getattr(result, "final_result", str(result)),
+            "raw": str(result),
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
