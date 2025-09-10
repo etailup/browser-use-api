@@ -1,40 +1,52 @@
-import os
 import asyncio
-from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from typing import Optional
 
-from browser_use import Agent, ChatOpenAI
+from browser_use.agent.service import Agent
+from browser_use.browser.browser import Browser, BrowserConfig
+from browser_use import ChatOpenAI
 
 app = FastAPI()
 
-class RunPayload(BaseModel):
-    task: str = Field(..., description="What the agent should do")
-    model: str = Field(default="gpt-4.1-mini", description="LLM model name")
-    start_url: Optional[str] = None
-    max_actions: int = 30
-    extra_instructions: Optional[str] = None
+class RunBody(BaseModel):
+    task: str
+    model: Optional[str] = "gpt-4o-mini"
+    max_actions: Optional[int] = 15
 
 @app.get("/health")
 async def health():
     return {"ok": True}
 
 @app.post("/run")
-async def run_agent(payload: RunPayload):
-    llm = ChatOpenAI(model=payload.model)
+async def run_agent(body: RunBody):
+    try:
+        # Browser configuration with Docker-safe flags
+        browser = Browser(
+            config=BrowserConfig(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                    "--disable-features=IsolateOrigins,site-per-process",
+                ],
+                viewport={"width": 1280, "height": 800},
+            )
+        )
 
-    task_text = payload.task
-    if payload.start_url:
-        task_text += f"\nStart from: {payload.start_url}"
-    if payload.extra_instructions:
-        task_text += f"\nExtra: {payload.extra_instructions}"
+        llm = ChatOpenAI(model=body.model)
 
-    agent = Agent(task=task_text, llm=llm, max_actions=payload.max_actions)
-    result = await agent.run()
+        agent = Agent(
+            task=body.task,
+            browser=browser,
+            llm=llm,
+            max_actions=body.max_actions or 15,
+        )
 
-    return {
-        "status": "ok",
-        "summary": getattr(result, "final_result", str(result)),
-        "raw": str(result)
-    }
+        result = await agent.run()
 
+        return {
