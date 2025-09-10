@@ -1,51 +1,51 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
-from browser_use import Agent, ChatOpenAI
+from typing import Optional
+
+# importa la tua logica (browser agent, ecc.)
+# se non ce l’hai ancora separata, puoi simulare la risposta
+# sostituendo questa funzione con quella vera che hai già
+async def run_browser_task(task: str, model: str, max_actions: int):
+    """
+    Finge di eseguire il task con browser-use e restituisce un risultato
+    compatibile con il formato che hai già visto.
+    """
+    class Result:
+        extracted_content = '{"checkbox1": false, "checkbox2": true}'
+        full_output = {
+            "all_results": [
+                {
+                    "is_done": True,
+                    "success": True,
+                    "extracted_content": '{"checkbox1": false, "checkbox2": true}'
+                }
+            ]
+        }
+
+    return Result()
+
+# Pydantic model per validare la richiesta
+class TaskRequest(BaseModel):
+    task: str
+    model: Optional[str] = "gpt-4.1-mini"
+    max_actions: Optional[int] = 15
 
 app = FastAPI()
 
-
-class RunRequest(BaseModel):
-    task: str
-    model: str = "gpt-4o-mini"
-    max_actions: int = 15
-
-
-@app.get("/")
-async def root():
-    return {"message": "Browser-use API is running"}
-
-
 @app.get("/health")
 async def health():
-    return {"ok": True}
-
+    return {"status": "ok"}
 
 @app.post("/run")
-async def run_task(body: RunRequest):
-    try:
-        agent = Agent(
-            task=body.task,
-            llm=ChatOpenAI(model=body.model),
-            max_actions=body.max_actions,
-        )
-        result = await agent.run()
+async def run_task(
+    req: TaskRequest,
+    output: str = Query("full", description="Set 'content_only' per ottenere solo il contenuto estratto")
+):
+    result = await run_browser_task(req.task, req.model, req.max_actions)
 
-        return {
-            "final_result": getattr(result, "final_result", None),
-            "raw": str(result),
-        }
+    if output == "content_only":
+        # 🔥 Restituisce solo l’estratto, in JSON puro
+        return result.extracted_content
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-from fastapi.responses import PlainTextResponse
-
-@app.get("/robots.txt", response_class=PlainTextResponse)
-def robots():
-    return "User-agent: *\nDisallow:\n"
-
-@app.get("/favicon.ico")
-def favicon():
-    # empty 204 to stop 404 spam
-    return Response(status_code=204)
+    # 🔥 Restituisce tutto (debug, metadati ecc.)
+    return result.full_output
