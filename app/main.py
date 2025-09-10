@@ -4,14 +4,24 @@ from browser_use import Agent, ChatOpenAI
 
 app = FastAPI()
 
+
+# --- Models ---
 class RunRequest(BaseModel):
     task: str
     model: str = "gpt-4o-mini"
     max_actions: int = 15
 
+
+# --- Routes ---
+@app.get("/")
+async def root():
+    return {"message": "Browser-use API is running"}
+
+
 @app.get("/health")
 async def health():
     return {"ok": True}
+
 
 @app.post("/run")
 async def run_task(body: RunRequest):
@@ -23,9 +33,6 @@ async def run_task(body: RunRequest):
         )
         result = await agent.run()
 
-        # You can choose how to format the response:
-        # - Entire result object
-        # - Only 'final_result'
         return {
             "final_result": getattr(result, "final_result", None),
             "raw": str(result),
