@@ -1,38 +1,40 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-import os, asyncio
-from browser_use import Agent, Browser, BrowserConfig
+from browser_use import Agent, ChatOpenAI
 
-app = FastAPI(title="browser-use-api")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], allow_credentials=True,
-    allow_methods=["*"], allow_headers=["*"],
-)
+app = FastAPI()
 
-class RunBody(BaseModel):
+
+class RunRequest(BaseModel):
     task: str
-    model: str | None = None
-    max_actions: int | None = 15
+    model: str = "gpt-4o-mini"
+    max_actions: int = 15
+
 
 @app.get("/")
-def root():
-    return {"message": "Browser-use API is running", "endpoints": ["/health", "/run"]}
+async def root():
+    return {"message": "Browser-use API is running"}
+
 
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+async def health():
+    return {"ok": True}
+
 
 @app.post("/run")
-async def run_agent(body: RunBody):
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise HTTPException(500, "OPENAI_API_KEY is not set")
-    browser = Browser(BrowserConfig(headless=True))
-    agent = Agent(task=body.task, llm=body.model or "gpt-4o-mini", browser=browser, max_actions=body.max_actions or 15)
+async def run_task(body: RunRequest):
     try:
+        agent = Agent(
+            task=body.task,
+            llm=ChatOpenAI(model=body.model),
+            max_actions=body.max_actions,
+        )
         result = await agent.run()
-        return {"ok": True, "result": result}
-    finally:
-        await browser.close()
+
+        return {
+            "final_result": getattr(result, "final_result", None),
+            "raw": str(result),
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
