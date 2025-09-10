@@ -31,10 +31,8 @@ async def run_task(body: RunRequest):
         )
         result = await agent.run()
 
-        return {
-            "final_result": getattr(result, "final_result", None),
-            "raw": str(result),
-        }
+        # ✅ Return only the clean extracted_content
+        return getattr(result, "extracted_content", None)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
