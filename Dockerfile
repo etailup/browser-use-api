@@ -11,12 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# install python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ✅ Install Playwright browser binaries AND host deps inside the image
-RUN python -m playwright install chromium
-RUN playwright install-deps chromium
+# ✅ install browsers
+RUN playwright install --with-deps chromium
 
 # app code
 COPY app ./app
