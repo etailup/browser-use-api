@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from browser_use.agent.service import Agent
-from browser_use.browser.browser import Browser, BrowserConfig
+from browser_use.browser import Browser, BrowserConfig   # <-- FIXED
 from browser_use import ChatOpenAI
 
 app = FastAPI()
