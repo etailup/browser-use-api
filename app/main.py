@@ -19,16 +19,12 @@ async def health():
 @app.post("/run")
 async def run_task(body: RunRequest):
     try:
-        # Create an Agent with the chosen model
         agent = Agent(
             task=body.task,
             llm=ChatOpenAI(model=body.model),
             max_actions=body.max_actions,
         )
-
-        # Run the agent and capture result
         result = await agent.run()
         return {"result": str(result)}
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
