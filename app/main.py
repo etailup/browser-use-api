@@ -5,14 +5,12 @@ from browser_use import Agent, ChatOpenAI
 app = FastAPI()
 
 
-# --- Models ---
 class RunRequest(BaseModel):
     task: str
     model: str = "gpt-4o-mini"
     max_actions: int = 15
 
 
-# --- Routes ---
 @app.get("/")
 async def root():
     return {"message": "Browser-use API is running"}
