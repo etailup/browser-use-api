@@ -1,8 +1,8 @@
 FROM python:3.11-slim
 
-# System deps + curl (needed for HEALTHCHECK)
+# System deps + curl (for healthcheck) + git (needed for pip git URLs)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+    git curl \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libx11-6 libxcomposite1 \
     libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 libpangocairo-1.0-0 \
     libxshmfence1 fonts-liberation ca-certificates \
@@ -23,7 +23,7 @@ COPY app ./app
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
-# 🔎 Healthcheck hits your /health endpoint
+# Healthcheck to your FastAPI /health
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -fsS http://localhost:8000/health || exit 1
 
