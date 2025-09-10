@@ -1,5 +1,4 @@
 fastapi
-uvicorn[standard]
-browser-use
-playwright
-
+uvicorn
+pydantic
+git+https://github.com/browser-use/browser-use.git
