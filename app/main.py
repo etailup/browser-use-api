@@ -38,3 +38,14 @@ async def run_task(body: RunRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+from fastapi.responses import PlainTextResponse
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots():
+    return "User-agent: *\nDisallow:\n"
+
+@app.get("/favicon.ico")
+def favicon():
+    # empty 204 to stop 404 spam
+    return Response(status_code=204)
