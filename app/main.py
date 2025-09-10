@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from browser_use import Agent, ChatOpenAI  # simpler import; browser is handled internally
+from browser_use import Agent, ChatOpenAI
 
 app = FastAPI()
 
