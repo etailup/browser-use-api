@@ -34,18 +34,28 @@ async def run_task(body: RunRequest):
         )
         result = await agent.run()
 
-        # Converti attributi in tipi serializzabili
-        final_result = getattr(result, "final_result", None)
-        extracted_content = getattr(result, "extracted_content", None)
-        intermediate_steps = getattr(result, "intermediate_steps", None)
+        # Chiamare i metodi per ottenere i valori reali
+        final_result = None
+        extracted_content = None
+        intermediate_steps = None
 
-        # Se sono oggetti, trasformali in stringhe
-        if final_result is not None and not isinstance(final_result, (str, int, float, dict, list)):
-            final_result = str(final_result)
-        if extracted_content is not None and not isinstance(extracted_content, (str, int, float, dict, list)):
-            extracted_content = str(extracted_content)
-        if intermediate_steps is not None and not isinstance(intermediate_steps, (str, int, float, dict, list)):
-            intermediate_steps = str(intermediate_steps)
+        try:
+            if callable(getattr(result, "final_result", None)):
+                final_result = result.final_result()
+        except Exception:
+            pass
+
+        try:
+            if callable(getattr(result, "extracted_content", None)):
+                extracted_content = result.extracted_content()
+        except Exception:
+            pass
+
+        try:
+            if hasattr(result, "intermediate_steps"):
+                intermediate_steps = result.intermediate_steps
+        except Exception:
+            pass
 
         return {
             "final_result": final_result,
