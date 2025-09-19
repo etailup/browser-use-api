@@ -1,5 +1,5 @@
 fastapi
 uvicorn
 pydantic
-git+https://github.com/browser-use/browser-use.git
+git+https://github.com/browser-use/browser-use.git@main
 playwright
