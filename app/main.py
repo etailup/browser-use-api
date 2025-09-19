@@ -24,7 +24,7 @@ async def health():
 @app.post("/run")
 async def run_task(body: RunRequest):
     """
-    Avvia un task con browser-use e restituisce i risultati completi.
+    Avvia un task con browser-use e restituisce risultati JSON-serializzabili.
     """
     try:
         agent = Agent(
@@ -34,10 +34,23 @@ async def run_task(body: RunRequest):
         )
         result = await agent.run()
 
+        # Converti attributi in tipi serializzabili
+        final_result = getattr(result, "final_result", None)
+        extracted_content = getattr(result, "extracted_content", None)
+        intermediate_steps = getattr(result, "intermediate_steps", None)
+
+        # Se sono oggetti, trasformali in stringhe
+        if final_result is not None and not isinstance(final_result, (str, int, float, dict, list)):
+            final_result = str(final_result)
+        if extracted_content is not None and not isinstance(extracted_content, (str, int, float, dict, list)):
+            extracted_content = str(extracted_content)
+        if intermediate_steps is not None and not isinstance(intermediate_steps, (str, int, float, dict, list)):
+            intermediate_steps = str(intermediate_steps)
+
         return {
-            "final_result": getattr(result, "final_result", None),
-            "extracted_content": getattr(result, "extracted_content", None),
-            "intermediate_steps": getattr(result, "intermediate_steps", None),
+            "final_result": final_result,
+            "extracted_content": extracted_content,
+            "intermediate_steps": intermediate_steps,
         }
 
     except Exception as e:
