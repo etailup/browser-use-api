@@ -23,6 +23,9 @@ async def health():
 
 @app.post("/run")
 async def run_task(body: RunRequest):
+    """
+    Avvia un task con browser-use e restituisce i risultati completi.
+    """
     try:
         agent = Agent(
             task=body.task,
@@ -31,12 +34,11 @@ async def run_task(body: RunRequest):
         )
         result = await agent.run()
 
-        # ✅ Prefer extracted_content if available, fallback to final_result
-        output = getattr(result, "extracted_content", None)
-        if not output:
-            output = getattr(result, "final_result", None)
-
-        return {"result": output}
+        return {
+            "final_result": getattr(result, "final_result", None),
+            "extracted_content": getattr(result, "extracted_content", None),
+            "intermediate_steps": getattr(result, "intermediate_steps", None),
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
