@@ -7,7 +7,7 @@ app = FastAPI()
 
 class RunRequest(BaseModel):
     task: str
-    model: str = "gpt-5-mini"
+    model: str = "gpt-4o-mini"
     max_actions: int = 15
 
 
